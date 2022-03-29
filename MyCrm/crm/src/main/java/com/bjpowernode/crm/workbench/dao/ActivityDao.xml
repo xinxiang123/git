@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace:要求使用你dao接口的全限定名称-->
+<mapper namespace="com.bjpowernode.crm.workbench.dao.ActivityDao">
+    <!--<select id="" resultType="">-->
+        <!--select * from student order by id-->
+    <!--</select>-->
+
+    <!--添加市场活动操作-->
+    <insert id="saveActivity">
+        insert into tbl_activity(id,owner,name,startDate,endDate,cost,description,createTime,createBy)
+        values(#{id},#{owner},#{name},#{startDate},#{endDate},#{cost},#{description},#{createTime},#{createBy})
+    </insert>
+
+    <!--根据条件查询得到市场活动总条数-->
+    <select id="getTotalByCondition" resultType="int">
+        select count(*)
+        from tbl_activity a
+        join tbl_user u
+        on a.owner = u.id
+        <!--因为是条件查询，所以页面中的条件不确定是否存在，需要使用动态sql-->
+        <where>
+            <if test="name != null and name != ''">
+                a.name like '%' #{name} '%'
+            </if>
+            <if test="owner != null and owner != ''">
+                and u.name like '%' #{owner} '%'
+            </if>
+            <if test="startDate!= null and startDate != ''">
+                <!--
+                    如果之后开始日期，就查开始日期之后的数据
+                    这里如果使用大于号“>”或小于号“<”容易和尖括号
+                    产生歧义，故使用&gt;表示大于号，使用 &lt; 表示小于号
+                -->
+                and a.startDate &gt; #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and a.endDate &lt; #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <!--根据条件查询得出市场活动列表-->
+    <select id="getActivityListByCondition" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+    <!--数据库中activity表中的owner是user表中的id是一大段字符串，我们要的owner是user中对应id的name，所以需要连接查询-->
+          select a.id,a.name,u.name as owner,a.startDate,a.endDate
+          from tbl_activity a
+          join tbl_user u
+          on a.owner = u.id
+      <!--因为是条件查询，所以页面中的条件不确定是否存在，需要使用动态sql-->
+        <where>
+            <if test="name != null and name != ''">
+                a.name like '%' #{name} '%'
+            </if>
+            <if test="owner != null and owner != ''">
+               and u.name like '%' #{owner} '%'
+            </if>
+            <if test="startDate!= null and startDate != ''">
+            <!--
+                如果之后开始日期，就查开始日期之后的数据
+                这里如果使用大于号“>”或小于号“<”容易和尖括号
+                产生歧义，故使用&gt;表示大于号，使用 &lt; 表示小于号
+            -->
+                and a.startDate &gt; #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and a.endDate &lt; #{endDate}
+            </if>
+        </where>
+
+        order by a.createTime desc
+
+        limit #{skipCount},#{pageSize}
+    </select>
+
+    <!--删除市场活动操作-->
+    <delete id="deleteActivity">
+        delete
+        from tbl_activity
+        where id
+        in
+        <foreach collection="array" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!--根据id获取市场活动，用于展示在修改模态窗口中-->
+    <select id="getActivityById" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+        select * from tbl_activity where id = #{id}
+    </select>
+
+    <!--修改市场活动-->
+    <update id="updateActivity">
+        update tbl_activity
+        set owner=#{owner},name=#{name},startDate=#{startDate},endDate=#{endDate},
+            cost=#{cost},description=#{description},editTime=#{editTime},editBy=#{editBy}
+        where id=#{id}
+    </update>
+
+    <!--通过id获取详细页面的信息-->
+    <select id="getDetailById" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+        select
+           a.id,u.name as owner,a.name,a.startDate,a.endDate,a.cost,a.description,
+           a.createTime,a.createBy,a.editTime,a.editBy
+        from tbl_activity a
+        join tbl_user u
+        on a.owner = u.id
+        where a.id=#{id}
+    </select>
+
+    <!--线索模块，通过线索id查找出关联的市场活动信息-->
+    <select id="getActivityByClueId" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+    <!--返回的对象是Activity类型的，但前端解除关联时需要的id是关系表（car表）中的id，所以可以根据需要返回car表中的id-->
+        select
+           car.id as id,a.name,u.name as owner,a.startDate,a.endDate
+        from tbl_activity a
+        join tbl_user u
+        on a.owner = u.id
+        join tbl_clue_activity_relation car
+        on a.id = car.activityId
+        where car.clueId = #{clueId}
+     </select>
+
+    <select id="getAListNotLinkedByClueId" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+        select
+            a.id,a.name,a.startDate,a.endDate,u.name as owner
+        from tbl_activity a
+        join tbl_user u
+        on a.owner = u.id
+
+        where a.name like '%' #{activityName} '%'
+        and a.id not in(select activityId from tbl_clue_activity_relation where clueId=#{clueId})
+    </select>
+
+    <select id="getAListByName" resultType="com.bjpowernode.crm.workbench.domain.Activity">
+        select a.id,a.name,a.startDate,a.endDate,u.name as owner
+        from tbl_activity a
+        join tbl_user u
+        on a.owner = u.id
+        where a.name like '%' #{name} '%'
+    </select>
+
+</mapper>

@@ -1,0 +1,52 @@
+公司中对于一些词语的使用意思
+
+add/create：跳转添加页，或者打开添加操作的模态窗口
+save：执行添加操作
+edit：跳转到修改页，或者打开修改操作的模态窗口
+update：执行修改操作
+get/find/select/query：执行查询操作
+特殊操作：login
+
+
+线索模块
+
+1、导入线索，客户，联系人，交易相关的表
+
+  线索模块相关表
+  tbl_clue 线索表
+  tbl_clue_remark 线索备注表
+  tbl_clue_activity_relation 线索和市场活动关联关系表
+
+  客户模块相关表
+  tbl_customer 客户表
+  tbl_customer_remark 客户备注表
+
+  联系人模块相关表
+  tbl_contacts 联系人表
+  tbl_contacts_remark 联系人备注表
+  tbl_contacts_activity_relation 联系人和市场活动关联关系表
+
+  交易模块相关表
+  tbl_tran 交易表
+  tbl_tran_remark 交易备注表
+  tbl_tran_history 交易历史表
+
+  数据字典相关表
+  tbl_dic_type 字典类型表
+  tbl_dic_value 字典表值
+
+  数据字典：
+    数据字典指的是在应用程序中，做表单元素选择内容用的相关的数据,数据字典中的数据是几乎不会发生变动的数据
+    如下拉框，单选框，复选框
+    数据字典普遍被应用在下拉框中
+
+  对于数据点，一定要分门别类的保存
+  按照typeCode来进行分类，最终会根据类型保存为7个List
+  将tbl_dic_value表中的数据按照以下几类划分出来，将其value值分别封装到List集合中
+  appellation
+  clueState
+  returnPriority
+  returnState
+  source
+  stage
+  transactionType
